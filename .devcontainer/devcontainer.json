@@ -1,0 +1,14 @@
+{
+  "name": "project-manager-training-2",
+  "build": { "dockerfile": "Dockerfile" },
+  "workspaceFolder": "/workspaces/project-manager-training-2",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/project-manager-training-2,type=bind",
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": ["mathematic.vscode-pdf"]
+    }
+  },
+  "forwardPorts": [5173],
+  "postCreateCommand": "npm ci --prefix app"
+}

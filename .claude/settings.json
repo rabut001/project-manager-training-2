@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(tools/devc.sh:*)",
+      "Bash(python3 tools/export_chat.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:www.ipa.go.jp)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ],
+    "deny": [
+      "Edit(.cache/**)",
+      "Write(.cache/**)"
+    ]
+  }
+}
