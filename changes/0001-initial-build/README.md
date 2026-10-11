@@ -94,7 +94,9 @@ PM 午前Ⅱの過去問 17回・425問を、スマホと PC のブラウザで�
 
 ### フェーズ3 公開
 
-利用者が GitHub にリポジトリを作り、push する。Actions で Pages へ載ったことと、スマホと PC で開けることを確かめる。
+開発コンテナに GitHub CLI（`gh`）を入れ、利用者がコンテナの中で `gh auth login` を済ませる。そのあと Claude が `gh` で公開リポジトリ `rabut001/project-manager-training-2` を作り、Pages の公開元を GitHub Actions にして push する。Actions で Pages へ載ったことと、スマホと PC の幅で開けることを確かめる。無料のプランで Pages を使うので、リポジトリは公開にする。
+
+`gh` の認証情報はコンテナの中（`/home/node/.config/gh`）にだけ置く。コンテナを作り直すと消えるので、そのときは `gh auth login` をやり直す。
 
 ## 問題文
 
