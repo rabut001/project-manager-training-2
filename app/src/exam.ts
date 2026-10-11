@@ -4,7 +4,10 @@ export type Choice = (typeof CHOICES)[number];
 
 export type Question = {
   no: number;
-  answer: Choice;
+  /** IPA の解答例で問題として成立しないとされた問は null。 */
+  answer: Choice | null;
+  /** answer が null のときの、IPA の解答例の注記。 */
+  answerNote?: string;
   image: string;
   explanation: string;
 };
@@ -39,7 +42,8 @@ function isQuestion(value: unknown): value is Question {
   const question = value as Record<string, unknown>;
   return (
     typeof question.no === "number" &&
-    isChoice(question.answer) &&
+    (isChoice(question.answer) ||
+      (question.answer === null && typeof question.answerNote === "string")) &&
     typeof question.image === "string" &&
     typeof question.explanation === "string"
   );
@@ -141,6 +145,11 @@ export const peekExam = exams.peek;
 export const loadExam = exams.load;
 export const peekIndex = () => indexes.peek("index");
 export const loadIndex = () => indexes.load("index");
+
+/** 正解のない問は、どの肢を選んでも正解として数える。 */
+export function isCorrect(question: Question, choice: Choice): boolean {
+  return question.answer === null || question.answer === choice;
+}
 
 export function imageUrl(image: string): string {
   return contentUrl(image);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   CHOICES,
   imageUrl,
+  isCorrect,
   type Choice,
   type Exam,
   type Question,
@@ -35,7 +36,7 @@ function statusLabel(answer: AnswerRecord | undefined, question: Question): stri
   if (!answer.confirmed) {
     return "選択済み、未確認";
   }
-  return answer.choice === question.answer ? "正解" : "誤答";
+  return isCorrect(question, answer.choice) ? "正解" : "誤答";
 }
 
 function numberLabel(
@@ -108,7 +109,7 @@ export function Practice({ exam, listHref, onLinkClick }: PracticeProps) {
     (item) => progress.answers[item.no]?.confirmed,
   );
   const correctCount = confirmedQuestions.filter(
-    (item) => progress.answers[item.no].choice === item.answer,
+    (item) => isCorrect(item, progress.answers[item.no].choice),
   ).length;
   const score =
     confirmedQuestions.length === 0
@@ -251,7 +252,7 @@ export function Practice({ exam, listHref, onLinkClick }: PracticeProps) {
             }
             if (itemAnswer?.confirmed) {
               classes.push(
-                itemAnswer.choice === item.answer ? "correct" : "incorrect",
+                isCorrect(item, itemAnswer.choice) ? "correct" : "incorrect",
               );
             } else if (itemAnswer) {
               classes.push("draft");
@@ -274,7 +275,7 @@ export function Practice({ exam, listHref, onLinkClick }: PracticeProps) {
                 <span className="badges" aria-hidden="true">
                   {itemAnswer?.confirmed && (
                     <span className="mark">
-                      {itemAnswer.choice === item.answer ? "○" : "×"}
+                      {isCorrect(item, itemAnswer.choice) ? "○" : "×"}
                     </span>
                   )}
                   {progress.checked.includes(item.no) && (
@@ -326,12 +327,18 @@ export function Practice({ exam, listHref, onLinkClick }: PracticeProps) {
 
         {confirmed && answer ? (
           <section className="result" aria-live="polite">
-            <p className={answer.choice === question.answer ? "ok" : "ng"}>
-              {answer.choice === question.answer ? "正解" : "不正解"}
+            <p className={isCorrect(question, answer.choice) ? "ok" : "ng"}>
+              {isCorrect(question, answer.choice) ? "正解" : "不正解"}
             </p>
             <p>
-              正答 <strong>{question.answer}</strong>
+              正答 <strong>{question.answer ?? "—"}</strong>
             </p>
+            {question.answer === null && (
+              <p>
+                IPA の解答例の注記: {question.answerNote}
+                どの肢を選んでも正解として数えます。
+              </p>
+            )}
             <p>{question.explanation}</p>
             <p className="note">IPA の公式解説ではない</p>
           </section>

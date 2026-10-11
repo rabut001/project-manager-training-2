@@ -74,7 +74,7 @@ def footer_top(samples: bytes, width: int, height: int) -> int:
 
 
 def content_bounds(
-    samples: bytes, width: int, y0: int, y1: int
+    samples: bytes, width: int, y0: int, y1: int, max_gap: int = 160
 ) -> tuple[int, int, int, int] | None:
     ink_rows: list[int] = []
     for y in range(y0, y1):
@@ -86,7 +86,7 @@ def content_bounds(
     # ページ番号の手前にある孤立した汚れは、問の本文から大きく離れているので捨てる。
     kept = [ink_rows[0]]
     for y in ink_rows[1:]:
-        if y - kept[-1] > 160:
+        if y - kept[-1] > max_gap:
             break
         kept.append(y)
     ink_rows = kept
@@ -166,7 +166,9 @@ def header_ys(page: pymupdf.Page) -> list[float]:
     return merged
 
 
-def crop_questions(pdf_path: Path, out_dir: Path) -> list[Path]:
+def crop_questions(
+    pdf_path: Path, out_dir: Path, max_gap: int = 160, only: set[int] | None = None
+) -> list[Path]:
     doc = pymupdf.open(pdf_path)
     # 表紙・表記ルール・メモ用紙には問番号がない。ページは正立で描く。
     pages: list[tuple[int, pymupdf.Pixmap, list[int], int]] = []
@@ -196,7 +198,7 @@ def crop_questions(pdf_path: Path, out_dir: Path) -> list[Path]:
         limits = tops + [footer]
         for index, top in enumerate(tops):
             bottom_limit = limits[index + 1]
-            bounds = content_bounds(samples, width, top, bottom_limit)
+            bounds = content_bounds(samples, width, top, bottom_limit, max_gap)
             if bounds is None:
                 doc.close()
                 raise SystemExit(f"問{number} の領域が空です。")
@@ -210,6 +212,9 @@ def crop_questions(pdf_path: Path, out_dir: Path) -> list[Path]:
             crop = bytearray()
             for y in range(y0, y1):
                 crop += samples[y * width + x0 : y * width + x1]
+            if only and number not in only:
+                number += 1
+                continue
             image = Image.frombytes("L", (x1 - x0, y1 - y0), bytes(crop))
             path = out_dir / f"q{number:02d}.webp"
             image.save(path, "WEBP", quality=WEBP_QUALITY, method=6)
@@ -223,12 +228,19 @@ def crop_questions(pdf_path: Path, out_dir: Path) -> list[Path]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="午前Ⅱの問題冊子を1問ずつ切り出す。")
     parser.add_argument("exam_id", help="回の id（例: 2025-r07-aki）")
+    parser.add_argument(
+        "--max-gap",
+        type=int,
+        default=160,
+        help="問の中でこれより離れた行は汚れとして捨てる（px）。肢が図から大きく離れている問で広げる",
+    )
+    parser.add_argument("--only", type=int, nargs="+", help="切り直す問番号。省略すると全問")
     args = parser.parse_args()
     exam_by_id(args.exam_id)
     pdf_path = mondai_pdf(args.exam_id)
     if not pdf_path.is_file():
         sys.exit(f"問題冊子がありません。先に tools/fetch.py を実行します: {pdf_path}")
-    crop_questions(pdf_path, CONTENT / args.exam_id)
+    crop_questions(pdf_path, CONTENT / args.exam_id, args.max_gap, set(args.only or []))
 
 
 if __name__ == "__main__":

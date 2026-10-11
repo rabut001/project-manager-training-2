@@ -16,22 +16,27 @@ import pymupdf
 from exams import CHECKLIST, CONTENT, EXAM_IDS, QUESTION_COUNT, exam_by_id, kaitou_pdf
 
 CHOICES = ["ア", "イ", "ウ", "エ"]
-ANSWER_RE = re.compile(r"問\s*(\d+)\s+([アイウエ])\s")
+ANSWER_RE = re.compile(r"問\s*(\d+)\s+([アイウエ]|（注）)\s")
+NOTE_RE = re.compile(r"（注）[ \t]*(\S[^\n]*)")
 
 
-def read_answers(exam_id: str) -> dict[int, str]:
+def read_answers(exam_id: str) -> tuple[dict[int, str | None], str]:
+    """問番号ごとの正解と、解答例の注記を返す。注記の付いた問（問題として成立しないなど）の正解は None。"""
     with pymupdf.open(kaitou_pdf(exam_id)) as doc:
         text = "".join(page.get_text() for page in doc)
     # 午前Ⅱの節だけを見る（解答例に午前Ⅰなどが並ぶ回に備える）。
     start = text.find("午前Ⅱ")
     section = text[start:] if start >= 0 else text
-    answers: dict[int, str] = {}
+    answers: dict[int, str | None] = {}
     for no, choice in ANSWER_RE.findall(section + " "):
-        answers.setdefault(int(no), choice)
+        answers.setdefault(int(no), None if choice == "（注）" else choice)
+    note = next((m.group(1).strip() for m in NOTE_RE.finditer(section) if m.group(1).strip()), "")
+    if None in answers.values() and not note:
+        raise SystemExit("注記の付いた問がありますが、注記の文を読めませんでした。")
     expected = set(range(1, QUESTION_COUNT + 1))
     if set(answers) != expected:
         raise SystemExit(f"正解を {QUESTION_COUNT} 問分読めませんでした: {sorted(answers)}")
-    return answers
+    return answers, note
 
 
 def write_json(path, value) -> None:
@@ -44,7 +49,7 @@ def main() -> None:
     parser.add_argument("exam_id")
     args = parser.parse_args()
     exam_id, title, _, _ = exam_by_id(args.exam_id)
-    answers = read_answers(exam_id)
+    answers, note = read_answers(exam_id)
 
     path = CONTENT / exam_id / "exam.json"
     old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"questions": []}
@@ -55,10 +60,12 @@ def main() -> None:
         if not (CONTENT / image).is_file():
             raise SystemExit(f"問題画像がありません。先に tools/cut.py を実行します: {image}")
         previous = old_by_no.get(no, {})
+        question: dict[str, object] = {"no": no, "answer": answers[no]}
+        if answers[no] is None:
+            question["answerNote"] = note
         questions.append(
-            {
-                "no": no,
-                "answer": answers[no],
+            question
+            | {
                 "image": image,
                 "stem": previous.get("stem", ""),
                 "choices": previous.get("choices", {choice: "" for choice in CHOICES}),
@@ -93,7 +100,7 @@ def main() -> None:
                 ],
             },
         )
-    print(f"{exam_id}: 正解 {''.join(answers[no] for no in range(1, QUESTION_COUNT + 1))}")
+    print(f"{exam_id}: 正解 {''.join(answers[no] or '－' for no in range(1, QUESTION_COUNT + 1))}")
 
 
 if __name__ == "__main__":

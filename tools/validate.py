@@ -30,7 +30,10 @@ def check_exam(exam_id: str, draft: bool) -> list[str]:
         errors.append(f"{exam_id}: 問番号が 1〜{QUESTION_COUNT} の順に並んでいません")
     for q in questions:
         where = f"{exam_id} 問{q.get('no')}"
-        if q.get("answer") not in CHOICES:
+        if q.get("answer") is None:
+            if not q.get("answerNote"):
+                errors.append(f"{where}: answer が null なのに answerNote がありません")
+        elif q.get("answer") not in CHOICES:
             errors.append(f"{where}: answer がア〜エではありません")
         image = q.get("image", "")
         if image != f"{exam_id}/q{q.get('no', 0):02d}.webp" or not (CONTENT / image).is_file():
@@ -53,7 +56,7 @@ def check_exam(exam_id: str, draft: bool) -> list[str]:
         explanation = q.get("explanation") or ""
         if not explanation:
             errors.append(f"{where}: explanation が空です")
-        elif f"{q.get('answer')}が正解" not in explanation:
+        elif q.get("answer") is not None and f"{q.get('answer')}が正解" not in explanation:
             errors.append(f"{where}: explanation に「{q.get('answer')}が正解」がありません")
     return errors
 

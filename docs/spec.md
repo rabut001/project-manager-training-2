@@ -30,14 +30,17 @@
 | 項目 | 内容 |
 | --- | --- |
 | `no` | 1〜25 |
-| `answer` | ア、イ、ウ、エ。IPA の解答例から取る |
+| `answer` | ア、イ、ウ、エ。IPA の解答例から取る。解答例に注記があり正解が無い問（平成28年度春期 問2「誤りにより問題として成立しない」）は `null` |
+| `answerNote` | `answer` が `null` のときだけ持つ。解答例の注記の文 |
 | `image` | `content/` からの相対パス（例: `2025-r07-aki/q01.webp`） |
 | `stem` | 設問文。表がある問は、表も Markdown の表で書く |
 | `choices` | `ア`〜`エ` をキーにした肢の本文。肢が表のときは Markdown の表で書く |
 | `visuals` | 文章だけでは表せない要素。`figure`（図・グラフ）、`table`（表）、`image`（その他の画像）。該当がなければ空配列 |
-| `explanation` | 学習用の解説。`answer` と矛盾しない。「<正解>が正解」を含む |
+| `explanation` | 学習用の解説。`answer` と矛盾しない。「<正解>が正解」を含む（`answer` が `null` の問を除く） |
 
-画面が使うのは `no`、`answer`、`image`、`explanation` だけである。
+画面が使うのは `no`、`answer`、`answerNote`、`image`、`explanation` だけである。
+
+`answer` が `null` の問は、どの肢を選んでも正解として数える。結果では正答を `—` とし、「IPA の解答例の注記: {answerNote}どの肢を選んでも正解として数えます。」を解説の前に出す。
 
 ## 回の一覧
 
