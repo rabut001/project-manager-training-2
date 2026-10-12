@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "chat-exports"
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 HIDDEN_RE = re.compile(
-    r"<(system-reminder|local-command-[a-z]+|command-[a-z]+)>.*?</\1>", re.DOTALL
+    r"<(system-reminder|local-command-[a-z]+|command-[a-z]+|task-notification)>.*?</\1>", re.DOTALL
 )
 
 
@@ -75,7 +75,8 @@ def to_markdown(lines: list[dict]) -> tuple[str, datetime.datetime]:
             tools.clear()
 
     for entry in lines:
-        if entry.get("isSidechain") or entry.get("isMeta"):
+        # isApiErrorMessage は利用上限などのエラー表示で、応答の本文ではない。
+        if entry.get("isSidechain") or entry.get("isMeta") or entry.get("isApiErrorMessage"):
             continue
         kind = entry.get("type")
         message = entry.get("message") or {}
