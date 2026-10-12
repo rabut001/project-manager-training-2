@@ -25,4 +25,4 @@
 
 | 案件 | 状況 |
 | --- | --- |
-| [0001-initial-build](0001-initial-build/README.md) | 着手 |
+| [0001-initial-build](0001-initial-build/README.md) | レビュー待ち |
