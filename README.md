@@ -6,6 +6,18 @@ IPA が公開しているプロジェクトマネージャ試験（PM）の午�
 
 仕様は [docs/spec.md](docs/spec.md) にあります。
 
+## このリポジトリについて
+
+このリポジトリは、Claude Code と OpenAI Codex を比べるために作りました。同じ指示を両方に与え、できあがったものを比較します。このリポジトリは Claude Code で作ったほうです。
+
+| 項目 | 内容 |
+| --- | --- |
+| ツール | Claude Code |
+| モデル | Claude Opus 5.5 |
+| モード | high |
+
+開発中の会話は [chat-exports/](chat-exports/) に残しています。
+
 ## フォルダ
 
 | パス | 内容 |
